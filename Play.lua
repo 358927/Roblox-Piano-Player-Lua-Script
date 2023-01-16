@@ -4,6 +4,7 @@ local me = ps.LocalPlayer
 
 local SoundFolder
 local sounds = { "9136673401", "9136674260", "9136675154", "9136676019", "9136676980", "9136677713" }
+local SoundArray = {}
 function playNote(Note,Volume)
 	local NotePitch = 1;
 	if 61 < Note then
@@ -28,6 +29,12 @@ function playNote(Note,Volume)
 	SoundInstance.TimePosition = 16 * (Octave - 1) + 8 * (1 - NoteFrom1To12 % 2) + 0.04;
 	SoundInstance.Pitch = NotePitch;
 	SoundInstance:Play();
+	if #SoundArray <= 15 then
+	    table.insert(SoundArray1,1,SoundInstance)
+    else
+        SoundArray[#SoundArray]:Destroy()
+	    table.insert(SoundArray1,1,SoundInstance)
+    end
 	task.delay(5, function()
 		SoundInstance:Stop();
 		SoundInstance:remove();
@@ -65,10 +72,12 @@ local UIS = game:GetService("UserInputService")
 local BreakBool = false
 local PauseBool = false
 local LoopBool = false
+local LocalMuteBool = false
 
 local BreakHotKey = Enum.KeyCode.Space
 local PauseHotKey = Enum.KeyCode.Tab
 local HideGuiHotKey = Enum.KeyCode.F1
+local LocalMuteHotKey = Enum.KeyCode.F2
 
 local Midis = {}
 if _G.close then _G.close() end
@@ -84,6 +93,10 @@ local UISConnection = UIS.InputBegan:Connect(function(input, gpe)
 	end   
 	if UIS:IsKeyDown(HideGuiHotKey) then
 		ScreenGui.Enabled = not ScreenGui.Enabled
+		return
+	end   
+	if UIS:IsKeyDown(LocalMuteHotKey) then
+		LocalMuteBool = not LocalMuteBool
 		return
 	end   
 end)
@@ -107,17 +120,21 @@ function Play(str)
 				task.wait(tonumber(arg))
 			elseif cmd == "Play" then
 				local Note,Volume = unpack(arg:split(","))
-				playNote(tonumber(Note),tonumber(Volume))
-				if game.PlaceId == 10851599 then
-					workspace.Pianos.RemoteEvents.GlobalPianoConnector:FireServer("play",{
-						["Note"] = tonumber(Note),
-						["Transposition"] = 0,
-						["Volume"] = tonumber(Volume)
-					})
-				end
-			end
-		end
-		task.wait()
+				coroutine.wrap(function() if LocalMuteBool then return end; playNote(tonumber(Note),tonumber(Volume)) end)()
+				coroutine.wrap(function()
+				    if game.PlaceId == 10851599 then
+    					workspace.Pianos.RemoteEvents.GlobalPianoConnector:FireServer("play",{
+    						["Note"] = tonumber(Note),
+    						["Transposition"] = 0,
+    						["Volume"] = tonumber(Volume)
+    					})
+    				elseif game.PlaceId == 3292155613 then
+    				    workspace.GlobalPianoConnector:FireServer("play",tonumber(Note),tonumber(Volume),0)
+    				end
+			    end)()
+		    end
+	    end
+	    task.wait()
 	until not LoopBool or BreakBool
 end
 
