@@ -29,11 +29,11 @@ function playNote(Note,Volume)
 	SoundInstance.TimePosition = 16 * (Octave - 1) + 8 * (1 - NoteFrom1To12 % 2) + 0.04;
 	SoundInstance.Pitch = NotePitch;
 	SoundInstance:Play();
-	if #SoundArray <= 15 then
-	    table.insert(SoundArray1,1,SoundInstance)
+	if #SoundArray <= 30 then
+	    table.insert(SoundArray,1,SoundInstance)
     else
         SoundArray[#SoundArray]:Destroy()
-	    table.insert(SoundArray1,1,SoundInstance)
+	    table.insert(SoundArray,1,SoundInstance)
     end
 	task.delay(5, function()
 		SoundInstance:Stop();
@@ -74,7 +74,6 @@ local PauseBool = false
 local LoopBool = false
 local LocalMuteBool = false
 
-local BreakHotKey = Enum.KeyCode.Space
 local PauseHotKey = Enum.KeyCode.Tab
 local HideGuiHotKey = Enum.KeyCode.F1
 local LocalMuteHotKey = Enum.KeyCode.F2
@@ -83,10 +82,6 @@ local Midis = {}
 if _G.close then _G.close() end
 local UISConnection = UIS.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
-	if UIS:IsKeyDown(BreakHotKey) then
-		BreakBool = true
-		return
-	end
 	if UIS:IsKeyDown(PauseHotKey) then
 		PauseBool = not PauseBool
 		return
